@@ -1,0 +1,251 @@
+{
+  "id": "1",
+  "name": "Agente Financiero Inteligente (Gastos e Ingresos)",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e8d99c4d-df7e-4076-9cf8-66df37910ff6",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        380,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Eres un Asistente Financiero Inteligente experto en control de finanzas personales.\n\nTu objetivo principal es ayudar al usuario a registrar y consultar sus gastos e ingresos mediante conversación natural en lenguaje simple.\n\nREGLAS DE OPERACIÓN:\n1. Identificación de Datos: Cuando el usuario exprese que quiere registrar un movimiento (ej. 'Gaste 1200 en pizza' o 'Cobre mi sueldo de 50000'), identifica:\n   - amount (monto del movimiento, ej. 1200 o 50000)\n   - type (debe ser 'Gasto' si es salida de dinero, o 'Ingreso' si es entrada de dinero)\n   - description (ej. 'pizza' o 'sueldo')\n   - category_name (sugiere una categoría coherente del sistema, ej. 'Alimentos', 'Sueldo', 'Transporte', 'Vivienda', 'Entretenimiento', 'Salud', 'Inversiones', 'Ventas', 'Otros Gastos', 'Otros Ingresos')\n   - raw_message (guarda el mensaje original escrito por el usuario)\n\n2. Confirmación Obligatoria: ¡NUNCA registres una transacción sin confirmar antes! Pídele confirmación al usuario de manera clara, repitiendo los datos que identificaste (ej. '¿Confirmas que quieres registrar un Gasto de 1200 pesos en Alimentos por pizza?').\n\n3. Registro: Una vez el usuario confirme explícitamente (ej. 'Sí', 'confirmo', 'dale', 'ok'), utiliza la herramienta 'create_transaction' para guardarla.\n\n4. Historial: Si el usuario te pide ver sus últimos movimientos, utiliza la herramienta 'get_recent_transactions' y muéstraselos en una lista limpia y legible, sumando y restando los montos para indicarle su balance reciente.\n\n5. Registro de Usuario: Siempre asocia las transacciones al 'whatsapp_id'. Como estás en la interfaz de chat local, usa por defecto el ID 'chat-usuario-local' como whatsapp_id.\n\nSé amable, profesional y claro en tus respuestas."
+        }
+      },
+      "id": "e2ba8f89-8d1b-4395-9ff0-cfc0a29023ff",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        600,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "id": "e30e70ab-3d8b-402a-9ca8-68e578c772c6",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        500,
+        420
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai_cred_placeholder",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "2bc997d4-8d48-4cb5-aa5c-dfb7ce8deec4",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "name": "create_transaction",
+        "description": "Registra un nuevo movimiento financiero (gasto o ingreso) en el sistema.",
+        "url": "http://backend:8000/api/v1/transactions",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"whatsapp_id\": \"{{$parameter.whatsapp_id}}\",\n  \"amount\": {{$parameter.amount}},\n  \"type\": \"{{$parameter.type}}\",\n  \"description\": \"{{$parameter.description}}\",\n  \"category_name\": \"{{$parameter.category_name}}\",\n  \"raw_message\": \"{{$parameter.raw_message}}\"\n}",
+        "outputFields": {
+          "fields": [
+            {
+              "name": "id"
+            },
+            {
+              "name": "amount"
+            },
+            {
+              "name": "type"
+            },
+            {
+              "name": "description"
+            },
+            {
+              "name": "date"
+            },
+            {
+              "name": "category"
+            }
+          ]
+        }
+      },
+      "id": "a57bb8bf-1049-43c3-8f0a-a82f8a4cb135",
+      "name": "create_transaction",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        780,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "name": "get_recent_transactions",
+        "description": "Obtiene la lista de transacciones recientes de la persona por su whatsapp_id.",
+        "url": "http://backend:8000/api/v1/transactions/recent?whatsapp_id={{$parameter.whatsapp_id}}",
+        "method": "GET",
+        "outputFields": {
+          "fields": [
+            {
+              "name": "id"
+            },
+            {
+              "name": "amount"
+            },
+            {
+              "name": "type"
+            },
+            {
+              "name": "description"
+            },
+            {
+              "name": "date"
+            },
+            {
+              "name": "category"
+            }
+          ]
+        }
+      },
+      "id": "e6a2bbcf-1f19-4828-8742-df8206d28be8",
+      "name": "get_recent_transactions",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        780,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "name": "get_or_create_user",
+        "description": "Verifica si existe un usuario en el sistema por su whatsapp_id, y lo crea si no existe.",
+        "url": "http://backend:8000/api/v1/users/get-or-create",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"whatsapp_id\": \"{{$parameter.whatsapp_id}}\",\n  \"name\": \"{{$parameter.name}}\"\n}",
+        "outputFields": {
+          "fields": [
+            {
+              "name": "id"
+            },
+            {
+              "name": "whatsapp_id"
+            },
+            {
+              "name": "name"
+            }
+          ]
+        }
+      },
+      "id": "fbfa8c8f-304e-4f36-9ff2-c7f8a96d2ee3",
+      "name": "get_or_create_user",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        780,
+        380
+      ]
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_model": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_model",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_transaction": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_recent_transactions": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_or_create_user": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": true,
+  "pinData": {}
+}

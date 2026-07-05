@@ -1,0 +1,268 @@
+{
+  "id": "1",
+  "name": "Agente Financiero - Mensajero Pasivo (Etapa 4)",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "chat-trigger-node",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        100,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "finanzas_whatsapp",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "WhatsApp Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        100,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst body = $json.body || {};\nconst jid = body.data?.key?.remoteJid || \"\";\nconst text = body.data?.message?.conversation || body.data?.message?.extendedTextMessage?.text || \"\";\nconst fromMe = body.data?.key?.fromMe;\n\n// Evitar bucles: detener el flujo si es del bot o si falta información\nif (fromMe === true || !jid || !text) {\n  return [];\n}\n\nreturn {\n  json: {\n    chatInput: text,\n    whatsapp_id: jid,\n    source: \"whatsapp\"\n  }\n};\n"
+      },
+      "id": "prep-whatsapp",
+      "name": "Prepare WhatsApp Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nreturn {\n  json: {\n    chatInput: $json.chatInput,\n    whatsapp_id: \"chat-usuario-local\",\n    source: \"chat\"\n  }\n};\n"
+      },
+      "id": "prep-chat",
+      "name": "Prepare Chat Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/v1/message",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"user\": \"{{ $json.whatsapp_id }}\",\n  \"message\": \"{{ $json.chatInput }}\"\n}",
+        "options": {}
+      },
+      "id": "api-message-node",
+      "name": "HTTP Request FastAPI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        550,
+        270
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-response",
+              "name": "response",
+              "value": "={{ $json.response }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-source",
+              "name": "source",
+              "value": "={{ $node[\"api-message-node\"].item.json.source }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-jid",
+              "name": "whatsapp_id",
+              "value": "={{ $node[\"api-message-node\"].item.json.whatsapp_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "final-response-node",
+      "name": "Set Output Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        270
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "value1": "={{ $json.source }}",
+              "value2": "whatsapp"
+            }
+          ]
+        },
+        "fallbackOutput": 1
+      },
+      "id": "route-channel-node",
+      "name": "Route Channel",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        270
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://evolution-api:8080/message/sendText/finanzas_instance",
+        "sendHeaders": true,
+        "headersContent": "apikey: global_api_token_evolution_api_2026",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $json.whatsapp_id }}\",\n  \"text\": \"{{ $json.response }}\"\n}",
+        "options": {}
+      },
+      "id": "send-wa-node",
+      "name": "API Send WhatsApp Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "final-chat-response",
+              "name": "response",
+              "value": "={{ $json.response }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "final-chat-node",
+      "name": "Final Chat Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1300,
+        320
+      ]
+    }
+  ],
+  "connections": {
+    "WhatsApp Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare WhatsApp Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Prepare Chat Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare WhatsApp Input": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request FastAPI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Chat Input": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request FastAPI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request FastAPI": {
+      "main": [
+        [
+          {
+            "node": "Set Output Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Output Message": {
+      "main": [
+        [
+          {
+            "node": "Route Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Channel": {
+      "main": [
+        [
+          {
+            "node": "API Send WhatsApp Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Final Chat Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": true,
+  "pinData": {}
+}

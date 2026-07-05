@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vinculación WhatsApp - Agente Financiero</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0f14;
+            --card-bg: rgba(22, 28, 45, 0.4);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent-color: #4f46e5;
+            --accent-glow: rgba(79, 70, 229, 0.4);
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, var-bgcolor 70%), var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(16px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a78bfa, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            text-align: center;
+            font-size: 1rem;
+            margin-bottom: 30px;
+        }
+
+        .step-card {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .step-number {
+            background: var(--accent-color);
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            margin-right: 12px;
+            font-size: 0.9rem;
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .step-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .btn {
+            background: var(--accent-color);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        .btn:hover {
+            background: #4338ca;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px var(--accent-glow);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: none;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: none;
+        }
+
+        .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            margin-top: 15px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .qr-image {
+            max-width: 220px;
+            border-radius: 8px;
+            background: #fff;
+            padding: 10px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            margin-top: 10px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            background: var(--text-muted);
+        }
+
+        .status-dot.active {
+            background: var(--success-color);
+            box-shadow: 0 0 8px var(--success-color);
+        }
+
+        .status-dot.error {
+            background: var(--error-color);
+            box-shadow: 0 0 8px var(--error-color);
+        }
+
+        .log-box {
+            background: #000;
+            font-family: monospace;
+            font-size: 0.8rem;
+            padding: 12px;
+            border-radius: 8px;
+            color: #10b981;
+            max-height: 120px;
+            overflow-y: auto;
+            margin-top: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: left;
+        }
+
+        .webhook-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vincular WhatsApp</h1>
+        <p class="subtitle">Conecta tu número al Agente Financiero Inteligente</p>
+
+        <!-- Paso 1: Crear Instancia -->
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div class="step-title">Crear Instancia de WhatsApp</div>
+            </div>
+            <button id="btnCreate" class="btn">Crear Instancia Financiera</button>
+            <div id="statusInstance" class="status-badge">
+                <div id="dotInstance" class="status-dot"></div>
+                <span id="textInstance">No inicializada</span>
+            </div>
+        </div>
+
+        <!-- Paso 2: Escanear QR -->
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div class="step-title">Escanear Código QR</div>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px;">
+                Abre WhatsApp en tu teléfono -> Dispositivos vinculados -> Vincular un dispositivo.
+            </p>
+            <button id="btnQR" class="btn btn-secondary" disabled>Obtener Código QR</button>
+            <div class="qr-container" id="qrBox">
+                <span style="color: var(--text-muted);">El código QR aparecerá aquí</span>
+            </div>
+        </div>
+
+        <!-- Paso 3: Configurar Webhook -->
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <div class="step-title">Configurar Webhook a n8n</div>
+            </div>
+            <input type="text" id="webhookUrl" class="webhook-input" value="http://n8n:5678/webhook/finanzas_whatsapp">
+            <button id="btnWebhook" class="btn" disabled>Enlazar Webhook con n8n</button>
+            <div id="statusWebhook" class="status-badge" style="margin-top: 10px;">
+                <div id="dotWebhook" class="status-dot"></div>
+                <span id="textWebhook">Webhook no enlazado</span>
+            </div>
+        </div>
+
+        <!-- Consola de Logs -->
+        <div class="log-box" id="logBox">
+            > Sistema de vinculación cargado. Listo para iniciar...
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = "global_api_token_evolution_api_2026";
+        const BASE_URL = "http://localhost:8080";
+        const INSTANCE_NAME = "finanzas_instance";
+
+        const logBox = document.getElementById("logBox");
+        const btnCreate = document.getElementById("btnCreate");
+        const btnQR = document.getElementById("btnQR");
+        const btnWebhook = document.getElementById("btnWebhook");
+        const qrBox = document.getElementById("qrBox");
+
+        const dotInstance = document.getElementById("dotInstance");
+        const textInstance = document.getElementById("textInstance");
+        const dotWebhook = document.getElementById("dotWebhook");
+        const textWebhook = document.getElementById("textWebhook");
+
+        let qrInterval = null;
+
+        function addLog(msg) {
+            logBox.innerHTML += `<br>> ${msg}`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        // Paso 1: Crear Instancia
+        btnCreate.addEventListener("click", async () => {
+            addLog("Enviando petición para crear/buscar instancia...");
+            try {
+                const response = await fetch(`${BASE_URL}/instance/create`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "apikey": API_KEY
+                    },
+                    body: JSON.stringify({
+                        instanceName: INSTANCE_NAME,
+                        token: "inst_token_finanzas_123",
+                        qrcode: true,
+                        integration: "WHATSAPP-BAILEYS"
+                    })
+                });
+
+                const data = await response.json();
+                if (response.status === 201 || response.status === 200 || data.instance) {
+                    addLog("¡Instancia creada con éxito!");
+                    dotInstance.className = "status-dot active";
+                    textInstance.innerText = "Instancia Activa";
+                    btnQR.disabled = false;
+                    btnWebhook.disabled = false;
+                    
+                    // Si ya viene el QR en la respuesta
+                    if (data.qrcode && data.qrcode.base64) {
+                        displayQR(data.qrcode.base64);
+                    }
+                } else {
+                    throw new Error(data.message || "Error desconocido");
+                }
+            } catch (err) {
+                addLog(`Error: ${err.message}`);
+                dotInstance.className = "status-dot error";
+                textInstance.innerText = "Error de conexión";
+            }
+        });
+
+        // Paso 2: Obtener QR
+        btnQR.addEventListener("click", () => {
+            addLog("Solicitando código QR...");
+            fetchQR();
+            if (qrInterval) clearInterval(qrInterval);
+            qrInterval = setInterval(fetchQR, 10000); // Actualiza cada 10 segundos
+        });
+
+        async function fetchQR() {
+            try {
+                const response = await fetch(`${BASE_URL}/instance/connect/${INSTANCE_NAME}`, {
+                    method: "GET",
+                    headers: {
+                        "apikey": API_KEY
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.base64) {
+                    displayQR(data.base64);
+                    addLog("Código QR actualizado. Escanéalo en tu teléfono.");
+                } else if (data.status === "open") {
+                    addLog("¡Dispositivo ya vinculado!");
+                    qrBox.innerHTML = `<span style="color: var(--success-color); font-weight: 600;">✅ ¡WhatsApp Conectado!</span>`;
+                    if (qrInterval) clearInterval(qrInterval);
+                } else {
+                    addLog("Esperando generación de QR por Evolution API...");
+                }
+            } catch (err) {
+                addLog(`Error al obtener QR: ${err.message}`);
+            }
+        }
+
+        function displayQR(base64) {
+            // Quitar prefijo si ya lo tiene, o agregarlo
+            const src = base64.startsWith("data:image") ? base64 : `data:image/png;base64,${base64}`;
+            qrBox.innerHTML = `<img src="${src}" class="qr-image" alt="QR Code">`;
+        }
+
+        // Paso 3: Configurar Webhook
+        btnWebhook.addEventListener("click", async () => {
+            const url = document.getElementById("webhookUrl").value;
+            addLog(`Enlazando webhook a n8n (${url})...`);
+            try {
+                const response = await fetch(`${BASE_URL}/webhook/set/${INSTANCE_NAME}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "apikey": API_KEY
+                    },
+                    body: JSON.stringify({
+                        enabled: true,
+                        url: url,
+                        headers: {},
+                        events: [
+                            "SEND_MESSAGE",
+                            "MESSAGES_UPSERT"
+                        ]
+                    })
+                });
+
+                const data = await response.json();
+                if (response.status === 200 || response.status === 201) {
+                    addLog("¡Webhook configurado correctamente en Evolution API!");
+                    dotWebhook.className = "status-dot active";
+                    textWebhook.innerText = "Webhook Conectado";
+                } else {
+                    throw new Error(data.message || "Error al configurar webhook");
+                }
+            } catch (err) {
+                addLog(`Error en Webhook: ${err.message}`);
+                dotWebhook.className = "status-dot error";
+                textWebhook.innerText = "Error al enlazar";
+            }
+        });
+    </script>
+</body>
+</html>
